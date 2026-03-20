@@ -95,7 +95,7 @@ Determine:
 | Type | Direction | Primary axis | Spacing (between edges) | Alignment |
 |------|-----------|-------------|------------------------|-----------|
 | Flowchart | Top-to-bottom | Y increases | 100px vertical | Center x |
-| Architecture | Top-to-bottom layers | Y increases | 120px vertical, 80px horizontal | Center each layer |
+| Architecture | Layered block (preferred) | Y increases | 20px between layers | Left label + container rows |
 | UML Sequence | Left-to-right participants | X increases | 200px horizontal | Top-aligned |
 | UML Class | Grid / top-to-bottom | Y increases | 100px vertical, 80px horizontal | Left-aligned columns |
 | ER Diagram | Spread / grid | Both axes | 120px both | Grid-aligned |
@@ -158,39 +158,53 @@ After generating XML, verify every item:
 
 ## Step 5: CLI Export (Cross-Platform)
 
-### Detect draw.io installation
+### 5a. Detect draw.io
+
+Run these commands **in order**, stop at the first one that succeeds:
 
 ```bash
-python3 scripts/check_dependency.py
+# 1. Try PATH first (works if user installed globally)
+which draw.io 2>/dev/null || which drawio 2>/dev/null
 ```
 
-### Export commands by platform
+If that fails, check platform-specific default paths:
 
 **macOS:**
 ```bash
-/Applications/draw.io.app/Contents/MacOS/draw.io \
-  -x -f png --scale 2 \
-  -o output.png diagram.drawio
+ls /Applications/draw.io.app/Contents/MacOS/draw.io 2>/dev/null
 ```
 
-**Windows (bash shell):**
+**Windows (bash/MSYS2):**
 ```bash
-"/c/Program Files/draw.io/draw.io.exe" \
-  -x -f png --scale 2 \
-  -o output.png diagram.drawio
-```
-
-**Windows (if bash path fails, use cmd-style):**
-```bash
-"C:/Program Files/draw.io/draw.io.exe" \
-  -x -f png --scale 2 \
-  -o output.png diagram.drawio
+# Check common install locations
+ls "/c/Program Files/draw.io/draw.io.exe" 2>/dev/null || \
+ls "$LOCALAPPDATA/Programs/draw.io/draw.io.exe" 2>/dev/null
 ```
 
 **Linux:**
 ```bash
-drawio -x -f png --scale 2 \
-  -o output.png diagram.drawio
+ls /usr/bin/drawio 2>/dev/null || ls /snap/bin/drawio 2>/dev/null
+```
+
+### 5b. If not found, guide installation
+
+Tell the user draw.io is not installed and suggest:
+
+| Platform | Install Command |
+|----------|----------------|
+| macOS | `brew install --cask drawio` |
+| Windows | `winget install JGraph.Draw` |
+| Linux | `snap install drawio` |
+| All | Download from https://github.com/jgraph/drawio-desktop/releases |
+
+Do NOT auto-install without user confirmation.
+
+### 5c. Export
+
+Use the detected path (stored as `$DRAWIO`) to export:
+
+```bash
+"$DRAWIO" -x -f png --scale 2 -o output.png diagram.drawio
 ```
 
 ### Export flags
@@ -206,21 +220,6 @@ drawio -x -f png --scale 2 \
 | `-p 0` | Export specific page (0-indexed) |
 | `--crop` | Crop to diagram content |
 
-### Platform detection in bash
-
-```bash
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  DRAWIO="/Applications/draw.io.app/Contents/MacOS/draw.io"
-elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-  DRAWIO="/c/Program Files/draw.io/draw.io.exe"
-  if [ ! -f "$DRAWIO" ]; then
-    DRAWIO="$LOCALAPPDATA/Programs/draw.io/draw.io.exe"
-  fi
-else
-  DRAWIO="drawio"
-fi
-```
-
 ## Step 6: Deliver to User
 
 After export:
@@ -233,6 +232,20 @@ After export:
 - Lowercase + hyphens: `ecommerce-order-flow.drawio`
 - No Chinese characters, spaces, or special characters in filenames
 - Output image uses same base name: `ecommerce-order-flow.png`
+
+## Architecture Diagram: Preferred Style
+
+For architecture diagrams, **always use the Layered Block style** unless the user explicitly asks for a connected-box-with-arrows style. The layered block style features:
+
+- Gray background rectangle (`fillColor=#f5f5f5;strokeColor=none;`)
+- Left label column: bold blue cells naming each layer
+- Layer containers: blue with `opacity=60`
+- Sub-groups within layers: blue with `verticalAlign=top;spacingTop=8;` headers
+- Leaf items: white `#ffffff` with gray border `#999999`
+- Optional cross-cutting sidebar: vertical panel on the right (red, dashed, `opacity=30`)
+- **No arrows/edges** — hierarchy expressed through spatial nesting
+
+See `references/best-practices.md` > "Architecture Diagram Templates (Layered Block Style)" for full templates and layout constants.
 
 ## Reference
 

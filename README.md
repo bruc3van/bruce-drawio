@@ -50,8 +50,6 @@ Use `--scale 2` for high-DPI PNG output.
 drawio-skill/
   SKILL.md                      # Main skill document (workflow + rules)
   skill.json                    # Skill metadata
-  scripts/
-    check_dependency.py         # Cross-platform dependency detection
   references/
     best-practices.md           # XML templates, styles, layout rules
     examples.md                 # Complete working XML examples
@@ -64,8 +62,4 @@ drawio-skill/
 
 ## Dependency Check
 
-```bash
-python scripts/check_dependency.py
-```
-
-This script auto-detects the platform, locates draw.io, and attempts installation if missing.
+No separate script needed. The LLM follows instructions in SKILL.md Step 5 to detect draw.io via shell commands (`which drawio`, checking default paths). If not found, it guides the user to install.

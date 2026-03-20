@@ -97,100 +97,317 @@ These are ready-to-use, tested XML examples demonstrating proper structure, layo
 </mxfile>
 ```
 
-## Example 2: Microservice Architecture
+## Example 2: Layered Block Architecture (Preferred Style)
+
+This is the **default architecture diagram style**: structured block layout with left label column,
+layer containers, sub-groups, and optional cross-cutting sidebar. No connecting arrows.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <mxfile host="app.diagrams.net" agent="drawio-skill" version="21.0.0" type="device">
-  <diagram name="Architecture" id="arch-1">
-    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1"
+  <diagram name="Platform Architecture" id="arch-1">
+    <mxGraphModel dx="1428" dy="842" grid="1" gridSize="10" guides="1" tooltips="1"
                    connect="1" arrows="1" fold="1" page="1" pageScale="1"
-                   pageWidth="1200" pageHeight="800" math="0" shadow="0">
+                   pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <!-- Layer 0: Client -->
-        <mxCell id="client" value="&lt;b&gt;Web / Mobile Client&lt;/b&gt;"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;"
+        <!-- Background -->
+        <mxCell id="background" value=""
+                style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=none;"
                 vertex="1" parent="1">
-          <mxGeometry x="440" y="40" width="180" height="60" as="geometry" />
+          <mxGeometry x="40" y="40" width="1080" height="700" as="geometry" />
         </mxCell>
 
-        <!-- Layer 1: Gateway -->
-        <mxCell id="gateway" value="&lt;b&gt;API Gateway (Nginx)&lt;/b&gt;"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;"
+        <!-- Cross-cutting sidebar (Security) -->
+        <mxCell id="security-frame" value=""
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;
+                       fontSize=16;verticalAlign=middle;align=center;opacity=30;dashed=1;"
                 vertex="1" parent="1">
-          <mxGeometry x="440" y="170" width="180" height="60" as="geometry" />
+          <mxGeometry x="990" y="60" width="110" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="security-title" value="Security"
+                style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;
+                       whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#b85450"
+                vertex="1" parent="1">
+          <mxGeometry x="1015" y="70" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="security-auth" value="Auth"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="1000" y="110" width="90" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="security-protection" value="Protection"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="1000" y="265" width="90" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="security-isolation" value="Isolation"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="1000" y="420" width="90" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="security-audit" value="Audit"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="1000" y="575" width="90" height="135" as="geometry" />
         </mxCell>
 
-        <!-- Layer 2: Services -->
-        <mxCell id="svc-user" value="&lt;b&gt;User Service&lt;/b&gt;"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;"
+        <!-- Layer 1: Scene Layer -->
+        <mxCell id="layer-scene" value="Scene&#xa;Layer"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=18;fontStyle=1;verticalAlign=middle;align=center;"
                 vertex="1" parent="1">
-          <mxGeometry x="160" y="320" width="160" height="60" as="geometry" />
+          <mxGeometry x="60" y="60" width="100" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="svc-order" value="&lt;b&gt;Order Service&lt;/b&gt;"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;"
+        <mxCell id="scene-container" value=""
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=60;"
                 vertex="1" parent="1">
-          <mxGeometry x="440" y="320" width="160" height="60" as="geometry" />
+          <mxGeometry x="180" y="60" width="790" height="110" as="geometry" />
         </mxCell>
-        <mxCell id="svc-pay" value="&lt;b&gt;Payment Service&lt;/b&gt;"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;"
+        <mxCell id="scene-1" value="Smart Office"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
                 vertex="1" parent="1">
-          <mxGeometry x="720" y="320" width="160" height="60" as="geometry" />
+          <mxGeometry x="200" y="85" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scene-2" value="Knowledge Base"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="85" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scene-3" value="Industry Q&amp;A"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="520" y="85" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scene-4" value="Customer Service"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="680" y="85" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scene-more" value="..."
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=16;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="85" width="110" height="60" as="geometry" />
         </mxCell>
 
-        <!-- Layer 3: Data -->
-        <mxCell id="db-user" value="&lt;b&gt;MySQL&lt;/b&gt;&lt;br&gt;Users"
-                style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;boundedLbl=1;backgroundOutline=1;size=10;"
+        <!-- Layer 2: Application Layer -->
+        <mxCell id="layer-app" value="Application&#xa;Layer"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=18;fontStyle=1;verticalAlign=middle;align=center;"
                 vertex="1" parent="1">
-          <mxGeometry x="170" y="470" width="140" height="80" as="geometry" />
+          <mxGeometry x="60" y="190" width="100" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="db-order" value="&lt;b&gt;MySQL&lt;/b&gt;&lt;br&gt;Orders"
-                style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;boundedLbl=1;backgroundOutline=1;size=10;"
+        <mxCell id="app-container" value=""
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=60;"
                 vertex="1" parent="1">
-          <mxGeometry x="450" y="470" width="140" height="80" as="geometry" />
+          <mxGeometry x="180" y="190" width="790" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="cache" value="&lt;b&gt;Redis&lt;/b&gt;&lt;br&gt;Cache"
-                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;"
+        <!-- Sub-group: Open Applications -->
+        <mxCell id="app-open" value="Open Applications"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
                 vertex="1" parent="1">
-          <mxGeometry x="730" y="480" width="140" height="60" as="geometry" />
+          <mxGeometry x="200" y="210" width="330" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="app-workspace" value="Workspace"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="212" y="250" width="95" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app-mgmt" value="Admin Panel"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="317" y="250" width="95" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app-channel" value="Channels"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="422" y="250" width="95" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app-app-mgmt" value="App Mgmt"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="212" y="295" width="95" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app-kb" value="KB Mgmt"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="317" y="295" width="95" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="app-api" value="Open API"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="422" y="295" width="95" height="35" as="geometry" />
+        </mxCell>
+        <!-- Sub-group: Smart Tools -->
+        <mxCell id="app-tools" value="Smart Tools"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="550" y="210" width="400" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-doc" value="Doc Processing"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="570" y="250" width="110" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-writing" value="Smart Writing"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="700" y="250" width="110" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-office" value="Office Assist"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="830" y="250" width="100" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-legal" value="Legal Expert"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="640" y="295" width="100" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="tool-security" value="Security Expert"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="760" y="295" width="100" height="35" as="geometry" />
         </mxCell>
 
-        <!-- Edges -->
-        <mxCell id="e-client-gw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="client" target="gateway">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Layer 3: Support Layer -->
+        <mxCell id="layer-support" value="Support&#xa;Layer"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=18;fontStyle=1;verticalAlign=middle;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="100" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="e-gw-user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="gateway" target="svc-user">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="support-container" value=""
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=60;"
+                vertex="1" parent="1">
+          <mxGeometry x="180" y="380" width="790" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="e-gw-order" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="gateway" target="svc-order">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="llm-group" value="LLM Integration"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="200" y="400" width="330" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="e-gw-pay" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="gateway" target="svc-pay">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="llm-models" value="Model Access"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="220" y="440" width="140" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="e-user-db" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="svc-user" target="db-user">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="llm-context" value="Context Mgmt"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="370" y="440" width="140" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="e-order-db" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="svc-order" target="db-order">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="llm-adapter" value="Unified Adapter"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="220" y="485" width="140" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="e-order-cache" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
-                edge="1" parent="1" source="svc-order" target="cache">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="llm-prompt" value="Prompt Mgmt"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="370" y="485" width="140" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="e-order-pay" value="call"
-                style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;"
-                edge="1" parent="1" source="svc-order" target="svc-pay">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="rag-group" value="RAG Enhancement"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="550" y="400" width="400" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-kb" value="Multi-KB"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="570" y="440" width="115" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-ocr" value="OCR"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="695" y="440" width="115" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-vector" value="Vectorization"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="820" y="440" width="115" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-search" value="Hybrid Search"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="570" y="485" width="115" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-rerank" value="Re-ranking"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="695" y="485" width="115" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="rag-source" value="Source Tracing"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="820" y="485" width="115" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Layer 4: Infrastructure Layer -->
+        <mxCell id="layer-infra" value="Infra&#xa;Layer"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=18;fontStyle=1;verticalAlign=middle;align=center;"
+                vertex="1" parent="1">
+          <mxGeometry x="60" y="570" width="100" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="infra-container" value=""
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=60;"
+                vertex="1" parent="1">
+          <mxGeometry x="180" y="570" width="790" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="infra-compute" value="Compute"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="200" y="590" width="230" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="compute-gpu" value="GPU/CPU Pool"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="220" y="640" width="190" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="infra-storage" value="Storage"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="450" y="590" width="250" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-file" value="File Store"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="462" y="640" width="70" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-rdb" value="RDBMS"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="542" y="640" width="70" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-vector" value="Vector DB"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="622" y="640" width="70" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="infra-deploy" value="Deployment"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
+                       fontSize=16;verticalAlign=top;align=center;spacingTop=8;"
+                vertex="1" parent="1">
+          <mxGeometry x="720" y="590" width="230" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="deploy-cross" value="Cross-platform"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="740" y="640" width="90" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="deploy-integration" value="Integration"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=14;"
+                vertex="1" parent="1">
+          <mxGeometry x="840" y="640" width="90" height="35" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
