@@ -1,68 +1,95 @@
-# Draw.io Diagram Generator Skill
+[English](README_EN.md) | 中文
 
-Cross-platform draw.io (diagrams.net) diagram generation skill for Claude Code. LLM directly generates drawio XML, self-reviews it, then exports via CLI.
+# Draw.io 图表生成技能
 
-## Supported Diagram Types
+跨平台的 draw.io (diagrams.net) 图表生成技能，适用于 AI 编程 Agent（Claude Code、OpenClaw 等）。Agent 直接生成 drawio XML，经过自检后通过 CLI 导出图片。
 
-| Type | Description | Trigger |
-|------|-------------|---------|
-| Flowchart | Business process, approval flows, algorithms | "draw a flowchart" |
-| Architecture | System architecture, microservices, deployment | "draw an architecture diagram" |
-| UML Sequence | Interaction timelines between components | "draw a sequence diagram" |
-| UML Class | Class relationships, inheritance | "draw a class diagram" |
-| ER Diagram | Database design, entity relationships | "draw an ER diagram" |
-| Mindmap | Brainstorming, knowledge organization | "draw a mindmap" |
-| Network Topology | Network architecture, device connectivity | "draw a network topology" |
+## 安装
 
-## Platform Support
+向你的 AI 编程 Agent 发送以下提示词：
 
-| Platform | draw.io Install | Package Manager |
-|----------|----------------|-----------------|
+```
+帮我安装这个skill：https://github.com/brucevanfdm/drawio-skill
+```
+
+Agent 会自动克隆仓库并完成配置。
+
+## 支持的图表类型
+
+| 类型 | 说明 | 触发词示例 |
+|------|------|-----------|
+| 流程图 | 业务流程、审批流程、算法逻辑 | "画一个流程图" |
+| 架构图 | 系统架构、微服务、部署架构 | "画一个架构图" |
+| UML 时序图 | 组件之间的交互时序 | "画一个时序图" |
+| UML 类图 | 类关系、继承结构 | "画一个类图" |
+| ER 图 | 数据库设计、实体关系 | "画一个 ER 图" |
+| 思维导图 | 头脑风暴、知识梳理 | "画一个思维导图" |
+| 网络拓扑图 | 网络架构、设备连接 | "画一个网络拓扑图" |
+
+## 平台支持
+
+| 平台 | 安装命令 | 包管理器 |
+|------|---------|---------|
 | macOS | `brew install --cask drawio` | Homebrew |
 | Windows | `winget install JGraph.Draw` | winget / Chocolatey |
-| Linux | `snap install drawio` | snap / manual |
+| Linux | `snap install drawio` | snap / 手动安装 |
 
-All platforms also support manual download from [draw.io releases](https://github.com/jgraph/drawio-desktop/releases).
+所有平台也支持从 [draw.io releases](https://github.com/jgraph/drawio-desktop/releases) 手动下载安装。
 
-## How It Works
+## 工作流程
 
-1. User describes the diagram they want
-2. LLM determines diagram type and elements
-3. LLM generates complete drawio XML directly
-4. Self-review checklist verifies correctness and layout
-5. Saves `.drawio` file
-6. CLI exports to PNG/SVG/PDF
-7. Delivers image and editable source file
+1. 用户描述想要的图表
+2. Agent 判断图表类型和关键元素
+3. Agent 直接生成完整的 drawio XML
+4. 自检清单验证正确性和布局
+5. 保存 `.drawio` 文件
+6. 通过 CLI 导出为 PNG/SVG/PDF
+7. 向用户展示图片并提供可编辑的源文件
 
-Text rule: when a label needs a forced line break, write it as `&#xa;` in the XML `value` attribute. Do not use literal `\n`.
-Layout rule: keep sibling boxes evenly aligned, gutters balanced, and containers densely filled. If a sidebar or group has obvious dead space, resize the frame or redistribute item spacing before export.
+## 导出格式
 
-## Export Formats
+| 格式 | 参数 | 适用场景 |
+|------|------|---------|
+| PNG | `-f png` | 默认格式，通用性强 |
+| SVG | `-f svg` | 可缩放矢量图 |
+| PDF | `-f pdf` | 打印 / 嵌入文档 |
 
-| Format | Flag | Use Case |
-|--------|------|----------|
-| PNG | `-f png` | Default, universal |
-| SVG | `-f svg` | Scalable vector |
-| PDF | `-f pdf` | Print / document |
+使用 `--scale 2` 可导出高清 PNG。
 
-Use `--scale 2` for high-DPI PNG output.
-
-## Project Structure
+## 项目结构
 
 ```
 drawio-skill/
-  SKILL.md                      # Main skill document (workflow + rules)
-  skill.json                    # Skill metadata
+  SKILL.md                      # 主技能文档（工作流程 + 规则）
+  skill.json                    # 技能元数据
   references/
-    best-practices.md           # XML templates, styles, layout rules
-    examples.md                 # Complete working XML examples
-  assets/
-    example-architecture.json   # Architecture diagram data
-    example-mindmap.json        # Mindmap diagram data
+    best-practices.md           # XML 模板、样式、布局规则
+    examples.md                 # 完整的可用 XML 示例
   evals/
-    evals.json                  # Test cases
+    evals.json                  # 测试用例
 ```
 
-## Dependency Check
+## 架构图风格
 
-No separate script needed. The LLM follows instructions in SKILL.md Step 5 to detect draw.io via shell commands (`which drawio`, checking default paths). If not found, it guides the user to install.
+架构图默认采用**分层块状布局**风格：
+
+- 灰色背景底板
+- 左侧标签列标注每一层（如"场景层"、"应用层"）
+- 蓝色半透明层容器，内含子分组
+- 白色叶子节点，灰色边框
+- 可选的右侧跨层侧边栏（如安全、监控等横切关注点）
+- 纯块状图，不使用箭头连线，通过空间嵌套表达层次关系
+
+## 依赖检测
+
+无需额外脚本。Agent 按照 SKILL.md 中的步骤通过 shell 命令（`which drawio`、检查默认安装路径）自动检测 draw.io。如果未安装，会引导用户安装。
+
+## 使用示例
+
+安装完成后，用自然语言描述你想要的图表即可，例如：
+
+- "画一个电商下单流程图"
+- "画一个微服务架构图"
+- "画一个用户注册的时序图"
+- "画一个博客系统的 ER 图"
+- "画一个 AI Agent 的思维导图"
