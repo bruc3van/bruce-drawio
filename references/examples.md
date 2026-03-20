@@ -2,6 +2,8 @@
 
 These are ready-to-use, tested XML examples demonstrating proper structure, layout, and styling.
 
+For multi-line text in any `value` attribute, use `&#xa;` instead of literal `\n`.
+
 ## Example 1: Simple Flowchart (Order Process)
 
 ```xml

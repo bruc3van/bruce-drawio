@@ -16,6 +16,11 @@
 - Edges should use `edgeStyle=orthogonalEdgeStyle;rounded=1;` for clean right-angle routing
 - Add `exitX`, `exitY`, `entryX`, `entryY` on edges for precise anchor points
 
+### Text and Line Breaks
+- For multi-line labels, use `&#xa;` inside `value`, for example `value="Scene&#xa;Layer"`
+- Never use literal `\n` inside `value`; draw.io treats it as visible text rather than a rendered line break
+- Apply the same rule to node labels, layer labels, edge labels, and swimlane/table text when a forced line break is needed
+
 ### Common Mistakes to Avoid
 
 1. **Duplicate IDs** - every mxCell must have a unique id
@@ -28,6 +33,7 @@
 8. **Too small font** - minimum fontSize=12, prefer 14
 9. **No edge style** - without `edgeStyle=orthogonalEdgeStyle`, edges route randomly
 10. **Page too small** - if content exceeds 1200x900, increase pageWidth/pageHeight
+11. **Literal `\n` in `value`** - use `&#xa;` for real line breaks
 
 ## Architecture Diagram Templates (Layered Block Style)
 
@@ -92,7 +98,7 @@ PAGE_W = SIDEBAR_X + SIDEBAR_W + MARGIN   // total page width (~1160)
 
 ### Layer Label (left column)
 ```xml
-<mxCell id="layer-scenario" value="Scene Layer"
+<mxCell id="layer-scenario" value="Scene&#xa;Layer"
         style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;
                fontSize=18;fontStyle=1;verticalAlign=middle;align=center;"
         vertex="1" parent="1">

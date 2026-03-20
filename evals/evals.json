@@ -48,6 +48,12 @@
       "name": "Cross-platform Export",
       "prompt": "Draw a simple flowchart (start -> process -> end) and export it as PNG.",
       "expected_output": "Valid drawio XML saved to .drawio file. Platform-appropriate CLI command used for export (macOS: /Applications/draw.io.app/..., Windows: draw.io.exe from Program Files or LOCALAPPDATA, Linux: drawio). Uses --scale 2 for crisp output."
+    },
+    {
+      "id": 9,
+      "name": "Multiline Label Encoding",
+      "prompt": "Draw a layered architecture diagram with layer labels split into two lines, such as 'Scene Layer' and 'Application Layer'.",
+      "expected_output": "Any forced line break inside XML value attributes is encoded as &#xa; rather than literal \\n, so draw.io renders actual new lines instead of backslash-n text."
     }
   ]
 }

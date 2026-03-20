@@ -69,6 +69,12 @@ Determine:
 </mxCell>
 ```
 
+### Text Content Rules
+
+- For multi-line labels, encode line breaks as `&#xa;` inside `value`, for example `value="API&#xa;Gateway"`
+- Do not write literal `\n` inside `value`; draw.io will render it as backslash + n text
+- Keep `html=1` on nodes, but still use `&#xa;` as the default line-break form for predictable output
+
 ### Edge Template
 
 ```xml
@@ -156,6 +162,7 @@ After generating XML, re-read your output and check each item below. If any chec
 
 **Style checks:**
 - [ ] All nodes include `whiteSpace=wrap;html=1;` in style
+- [ ] Every multi-line label uses `&#xa;` inside `value`, never literal `\n`
 - [ ] `fontSize=14` or larger for readability
 - [ ] Edges use `edgeStyle=orthogonalEdgeStyle` for clean routing (except mindmaps which use `curved=1`)
 - [ ] Decision nodes use `rhombus` shape; database nodes use `shape=cylinder3`

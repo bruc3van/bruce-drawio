@@ -34,6 +34,8 @@ All platforms also support manual download from [draw.io releases](https://githu
 6. CLI exports to PNG/SVG/PDF
 7. Delivers image and editable source file
 
+Text rule: when a label needs a forced line break, write it as `&#xa;` in the XML `value` attribute. Do not use literal `\n`.
+
 ## Export Formats
 
 | Format | Flag | Use Case |
