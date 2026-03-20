@@ -95,6 +95,9 @@ Determine:
 4. **Consistent sizing**: same-type nodes use identical width and height
 5. **Page margins**: keep at least 60px from the canvas edge (pageWidth/pageHeight)
 6. **Use `whiteSpace=wrap;html=1;`** on all nodes so long text wraps instead of overflowing
+7. **Balanced gutters**: outer padding around a row/column should visually match the internal gaps; avoid one oversized blank side
+8. **Symmetry first**: centered groups should have roughly equal left/right and top/bottom whitespace
+9. **Dense fill**: containers, sub-groups, and sidebars should fit content plus consistent padding; do not leave large dead zones just because the canvas is large
 
 ### Layout by Diagram Type
 
@@ -129,6 +132,21 @@ item[i].x = start_x + i * (node_width + gap)
 
 For vertical centering in a column, apply the same logic to Y axis.
 
+For rows inside a fixed-width container, also check fill density:
+
+```
+inner_width = container_width - 2 * side_pad
+gap = (inner_width - N * item_width) / (N - 1)
+```
+
+If `gap` is much larger than the item width, or side padding is much larger than `gap`, adjust one of:
+- increase item width moderately
+- increase item count per row only if still readable
+- reduce container width
+- split into multiple balanced rows
+
+For incomplete last rows, center the remaining items instead of left-aligning them and leaving a large blank tail.
+
 ### Standard Sizes
 
 | Element | Width | Height |
@@ -159,6 +177,10 @@ After generating XML, re-read your output and check each item below. If any chec
 - [ ] No two non-container nodes overlap: for each pair, confirm their bounding boxes (x, y, x+width, y+height) don't intersect
 - [ ] All coordinates (x, y) are multiples of 10 — scan every `mxGeometry` element
 - [ ] Page dimensions (pageWidth, pageHeight) are large enough for all content with margins
+- [ ] Sibling items in the same row/column use equal sizes and equal gaps unless there is a clear reason not to
+- [ ] Left/right padding and top/bottom padding inside each container are visually balanced; no obvious one-sided blank area
+- [ ] Containers, sub-groups, and sidebars are sized to content plus padding; if a blank region is larger than a normal item gap or roughly a full item row, tighten the layout
+- [ ] Incomplete last rows are centered or otherwise balanced; they are not stuck to one side with a large empty remainder
 
 **Style checks:**
 - [ ] All nodes include `whiteSpace=wrap;html=1;` in style

@@ -54,6 +54,12 @@
       "name": "Multiline Label Encoding",
       "prompt": "Draw a layered architecture diagram with layer labels split into two lines, such as 'Scene Layer' and 'Application Layer'.",
       "expected_output": "Any forced line break inside XML value attributes is encoded as &#xa; rather than literal \\n, so draw.io renders actual new lines instead of backslash-n text."
+    },
+    {
+      "id": 10,
+      "name": "Balanced Alignment And Dense Fill",
+      "prompt": "Draw a layered architecture diagram with a right-side cross-cutting concerns sidebar and several grouped modules in the core layer.",
+      "expected_output": "Sibling boxes are evenly aligned with consistent gaps, incomplete rows are centered, and containers/sidebar are tightened or redistributed so there is no obvious one-sided blank space or oversized unused area."
     }
   ]
 }

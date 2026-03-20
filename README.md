@@ -35,6 +35,7 @@ All platforms also support manual download from [draw.io releases](https://githu
 7. Delivers image and editable source file
 
 Text rule: when a label needs a forced line break, write it as `&#xa;` in the XML `value` attribute. Do not use literal `\n`.
+Layout rule: keep sibling boxes evenly aligned, gutters balanced, and containers densely filled. If a sidebar or group has obvious dead space, resize the frame or redistribute item spacing before export.
 
 ## Export Formats
 

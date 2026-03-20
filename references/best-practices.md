@@ -21,6 +21,15 @@
 - Never use literal `\n` inside `value`; draw.io treats it as visible text rather than a rendered line break
 - Apply the same rule to node labels, layer labels, edge labels, and swimlane/table text when a forced line break is needed
 
+### Alignment and Space Usage
+- Sibling items in the same row or column should use equal widths, equal heights, and equal gaps unless the content explicitly requires otherwise
+- Outer padding should be close to the internal gap size; avoid one oversized blank gutter on the left, right, top, or bottom
+- Containers should be content-driven: fit the actual number of rows and columns plus consistent padding, instead of leaving large unused blank blocks
+- If the last row is not full, center it inside the container rather than leaving a large empty tail on one side
+- For sidebars and cross-cutting panels, either:
+  - size the panel to its content plus balanced top/bottom padding, or
+  - if the panel must span the full stack height, distribute items so the top gap, inter-item gaps, and bottom gap are visually balanced
+
 ### Common Mistakes to Avoid
 
 1. **Duplicate IDs** - every mxCell must have a unique id
@@ -34,6 +43,8 @@
 9. **No edge style** - without `edgeStyle=orthogonalEdgeStyle`, edges route randomly
 10. **Page too small** - if content exceeds 1200x900, increase pageWidth/pageHeight
 11. **Literal `\n` in `value`** - use `&#xa;` for real line breaks
+12. **Unbalanced whitespace** - reduce one-sided blank areas by resizing items, gaps, or the containing frame
+13. **Loose packing** - do not leave containers half-empty when a tighter, symmetric layout is possible
 
 ## Architecture Diagram Templates (Layered Block Style)
 
@@ -68,6 +79,7 @@ optional right-side cross-cutting concerns sidebar.
 6. **Cross-cutting sidebar (optional)** - Vertical panel on the right (e.g., red `#f8cecc` with `opacity=30;dashed=1;`) for cross-cutting concerns like security, monitoring
 7. **No edges/arrows** - Pure block diagram; hierarchy is expressed through spatial nesting
 8. **Compact packing** - Items tightly arranged in grid within sub-groups, minimal wasted space
+9. **Balanced fill** - Right sidebar, sub-groups, and layer containers should feel full and evenly distributed, not sparse
 
 ### Layout Constants
 
@@ -81,9 +93,15 @@ SIDEBAR_X = CONTAINER_X + CONTAINER_W + 20  // sidebar x (990)
 SIDEBAR_W = 110                // sidebar width
 LAYER_GAP = 20                 // vertical gap between layers
 SUBGROUP_PAD = 20              // padding inside layer container to sub-groups
+SUBGROUP_PAD_Y = 20            // vertical padding inside containers
+SUBGROUP_HEADER_H = 40         // reserved header space inside subgroup
 ITEM_GAP_H = 10               // horizontal gap between leaf items
 ITEM_GAP_V = 10               // vertical gap between leaf item rows
 ITEM_H = 35                   // standard leaf item height
+SIDEBAR_PAD_X = 10            // sidebar horizontal inner padding
+SIDEBAR_PAD_Y = 20            // sidebar vertical inner padding
+SIDEBAR_TITLE_H = 30          // sidebar title height
+SIDEBAR_TITLE_GAP = 10        // gap below sidebar title
 PAGE_W = SIDEBAR_X + SIDEBAR_W + MARGIN   // total page width (~1160)
 ```
 
@@ -181,6 +199,8 @@ Items inside the sub-group:
 </mxCell>
 ```
 
+Do not leave a large empty tail at the bottom of the sidebar. Either shrink the sidebar frame to fit the title + items, or recompute vertical distribution so top/bottom margins and item gaps are balanced.
+
 ### Layered Block Layout Calculation
 
 For a diagram with N layers:
@@ -210,11 +230,30 @@ subgroup[1].width = subgroup[0].width
 
 // Items inside sub-group: grid layout
 // header takes ~40px from top (spacingTop=8 + fontSize=16)
-item_start_y = subgroup.y + 40
+item_start_y = subgroup.y + SUBGROUP_HEADER_H
 item[row][col].x = subgroup.x + 12 + col * (item_width + ITEM_GAP_H)
 item[row][col].y = item_start_y + row * (ITEM_H + ITEM_GAP_V)
+
+// Dense-fill check for subgroup rows
+row_inner_width = subgroup.width - 24
+row_content_width = cols * item_width + (cols - 1) * ITEM_GAP_H
+row_side_pad = (row_inner_width - row_content_width) / 2
+// Keep row_side_pad close to ITEM_GAP_H; if it is much larger, widen items,
+// reduce subgroup width, or rebalance columns/rows.
+
+// For incomplete last rows, recenter the last row using the actual item count in that row.
+last_row_content_width = last_row_cols * item_width + (last_row_cols - 1) * ITEM_GAP_H
+last_row_start_x = subgroup.x + (subgroup.width - last_row_content_width) / 2
 
 // Sidebar spans full height alongside all layers
 sidebar.y = layer[0].y
 sidebar.height = layer[N-1].y + layer[N-1].height - layer[0].y
+
+// If the sidebar spans full height, distribute items evenly rather than pinning them to the top:
+sidebar_content_top = sidebar.y + SIDEBAR_PAD_Y + SIDEBAR_TITLE_H + SIDEBAR_TITLE_GAP
+usable_sidebar_h = sidebar.height - (SIDEBAR_PAD_Y * 2) - SIDEBAR_TITLE_H - SIDEBAR_TITLE_GAP
+slot_gap = (usable_sidebar_h - item_count * item_h) / (item_count - 1)
+// If slot_gap is too large, prefer shrinking sidebar.height to content-fit:
+sidebar.height = SIDEBAR_PAD_Y * 2 + SIDEBAR_TITLE_H + SIDEBAR_TITLE_GAP +
+                 item_count * item_h + (item_count - 1) * desired_gap
 ```
