@@ -9,7 +9,7 @@ Cross-platform draw.io (diagrams.net) diagram generation skill for AI coding age
 Send the following prompt to your AI coding agent:
 
 ```
-Help me install this skill: https://github.com/brucevanfdm/bruce-drawio
+Help me install this skill: https://github.com/bruc3van/bruce-drawio
 ```
 
 The agent will clone the repository and configure the skill automatically.
