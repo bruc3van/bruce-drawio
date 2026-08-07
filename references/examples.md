@@ -1,6 +1,17 @@
 # Draw.io Complete XML Examples
 
-These are ready-to-use, tested XML examples demonstrating proper structure, layout, and styling.
+These are ready-to-use XML examples demonstrating proper structure, layout, and styling. All
+four pass `scripts/validate_drawio.py` — copy the structure of the closest one rather than
+composing a diagram from scratch.
+
+Two things to carry over from every example, because they are invisible in a rendered picture:
+
+- **Cell order is z-order.** Cells are emitted back-to-front: background, then containers,
+  then leaf nodes, then edges. Reordering them changes what covers what.
+- **`parent` and coordinates go together.** Examples 1-3 are flat: every cell is `parent="1"`
+  with absolute canvas coordinates, including the leaf items that look nested inside
+  sub-groups in Example 2. Only Example 4 uses true nesting, where a swimlane row's `parent`
+  is the table ID and its `y` is an offset *inside* that table.
 
 For multi-line text in any `value` attribute, use `&#xa;` instead of literal `\n`.
 
@@ -21,7 +32,7 @@ For multi-line text in any `value` attribute, use `&#xa;` instead of literal `\n
         <mxCell id="start" value="User Places Order"
                 style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;arcSize=50;"
                 vertex="1" parent="1">
-          <mxGeometry x="340" y="40" width="180" height="60" as="geometry" />
+          <mxGeometry x="350" y="40" width="160" height="60" as="geometry" />
         </mxCell>
 
         <!-- Process: Create Order -->

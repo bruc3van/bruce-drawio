@@ -1,5 +1,5 @@
 {
-  "skill_name": "drawio",
+  "skill_name": "bruce-drawio",
   "evals": [
     {
       "id": 1,
@@ -60,6 +60,36 @@
       "name": "Balanced Alignment And Dense Fill",
       "prompt": "Draw a layered architecture diagram with a right-side cross-cutting concerns sidebar and several grouped modules in the core layer.",
       "expected_output": "Sibling boxes are evenly aligned with consistent gaps, incomplete rows are centered, and containers/sidebar are tightened or redistributed so there is no obvious one-sided blank space or oversized unused area."
+    },
+    {
+      "id": 11,
+      "name": "Open Generated Diagram In draw.io Online",
+      "prompt": "Draw a simple flowchart (start -> process -> end), then give me a link to open it in draw.io.",
+      "expected_output": "After saving the .drawio file, scripts/open_in_drawio.py (or open_in_drawio.js) is run on it and the resulting https://app.diagrams.net/?title=...#R... link is delivered to the user. The browser is NOT launched unless the user asked for it."
+    },
+    {
+      "id": 12,
+      "name": "Browser Fallback When Desktop App Missing",
+      "prompt": "Draw a microservice architecture diagram and export it as PNG. (Assume draw.io desktop is not installed on this machine.)",
+      "expected_output": "Detection fails, but the run does not stop and does not block on an install prompt. The .drawio file is still saved, an app.diagrams.net link is generated and delivered, the skipped export is stated in one line, and the desktop install is mentioned only as an optional extra."
+    },
+    {
+      "id": 13,
+      "name": "Validator Is Run Before Delivery",
+      "prompt": "Draw a network topology with a modem, router, switch, NAS, TV, phone and laptop.",
+      "expected_output": "scripts/validate_drawio.py is run on the saved .drawio file and exits clean before any export or delivery. If it reports errors, the XML is fixed and the validator re-run rather than the errors being explained away."
+    },
+    {
+      "id": 14,
+      "name": "Background Plate Z-Order",
+      "prompt": "Draw a layered architecture diagram with a gray background plate behind all layers.",
+      "expected_output": "The background rectangle is the FIRST cell in <root> after ids 0 and 1, followed by layer containers, then sub-groups, then leaf items, then edges. A background emitted after the nodes would hide the whole diagram."
+    },
+    {
+      "id": 15,
+      "name": "Nested Container Coordinates",
+      "prompt": "Draw an ER diagram for an inventory system, and a layered architecture diagram for the same system.",
+      "expected_output": "The ER tables use true nesting (row parent = swimlane id, y is an offset inside the table, x omitted). The architecture diagram uses the flat form (every cell parent=\"1\" with absolute canvas coordinates) even though items look nested inside sub-groups. The two conventions are not mixed within one group."
     }
   ]
 }

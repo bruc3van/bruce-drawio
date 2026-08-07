@@ -8,6 +8,23 @@
 - Recommended format: `{type}-{name}` or `{type}-{number}`
 - IDs `0` and `1` are reserved for root mxCells
 
+### Cell Order Is Z-Order
+- draw.io paints cells in document order — later cells sit on top of earlier ones
+- Emit back-to-front: background plate → layer containers → sub-groups → leaf nodes → edges
+- A background rectangle written after the nodes hides the whole diagram behind it, and
+  renders as a blank image with no error message
+
+### Parent and Coordinate System
+- A cell's `x`/`y` are relative to its parent, so `parent` and coordinates must be chosen together
+- **Default: flat + absolute** — `parent="1"` on every cell, absolute canvas coordinates. This
+  is what the Layered Block Style uses: the nesting you see is produced by the numbers, not by
+  the cell tree
+- **True nesting** is only for shapes that genuinely own their children: `swimlane` tables
+  (ER, UML class) and `childLayout=stackLayout` rows. There the child's `parent` is the
+  container ID, `x` is usually omitted, and `y` is the offset inside the container
+- Never mix the two for the same group — a child given the container as `parent` but absolute
+  coordinates lands far outside the canvas
+
 ### Style Essentials
 - Always include `whiteSpace=wrap;html=1;` so text wraps properly
 - Always set `fontSize=14;` or larger for readability
@@ -32,19 +49,25 @@
 
 ### Common Mistakes to Avoid
 
-1. **Duplicate IDs** - every mxCell must have a unique id
-2. **Wrong parent** - standalone nodes use `parent="1"`, container children use the container ID
-3. **Missing `as="geometry"`** - every mxGeometry must have this attribute
-4. **Overlapping nodes** - always calculate and verify bounding boxes
-5. **Missing `whiteSpace=wrap;html=1;`** - text will overflow without this
-6. **Edges referencing non-existent IDs** - double-check source/target
-7. **Coordinates not grid-aligned** - use multiples of 10
-8. **Too small font** - minimum fontSize=12, prefer 14
-9. **No edge style** - without `edgeStyle=orthogonalEdgeStyle`, edges route randomly
+1. **Background drawn last** - it covers the entire diagram; emit cells back-to-front
+2. **Duplicate IDs** - every mxCell must have a unique id
+3. **Parent and coordinates mismatched** - `parent="1"` goes with absolute coordinates, a
+   container ID goes with coordinates relative to that container; never mix them
+4. **Missing `as="geometry"`** - every mxGeometry must have this attribute
+5. **Overlapping nodes** - always calculate and verify bounding boxes
+6. **Missing `whiteSpace=wrap;html=1;`** - text will overflow without this
+7. **Edges referencing non-existent IDs** - double-check source/target
+8. **Fractional coordinates** - always round to whole numbers; align top-level blocks to
+   multiples of 10, but do not nudge computed positions onto the grid at the cost of equal gaps
+9. **Too small font** - minimum fontSize=12, prefer 14
 10. **Page too small** - if content exceeds 1200x900, increase pageWidth/pageHeight
 11. **Literal `\n` in `value`** - use `&#xa;` for real line breaks
-12. **Unbalanced whitespace** - reduce one-sided blank areas by resizing items, gaps, or the containing frame
-13. **Loose packing** - do not leave containers half-empty when a tighter, symmetric layout is possible
+12. **No edge style** - without `edgeStyle=orthogonalEdgeStyle`, edges route randomly
+13. **Unbalanced whitespace** - reduce one-sided blank areas by resizing items, gaps, or the containing frame
+14. **Loose packing** - do not leave containers half-empty when a tighter, symmetric layout is possible
+
+Items 2-8 and 11 are all caught by `scripts/validate_drawio.py` - run it instead of
+checking them by eye.
 
 ## Architecture Diagram Templates (Layered Block Style)
 
@@ -80,6 +103,11 @@ optional right-side cross-cutting concerns sidebar.
 7. **No edges/arrows** - Pure block diagram; hierarchy is expressed through spatial nesting
 8. **Compact packing** - Items tightly arranged in grid within sub-groups, minimal wasted space
 9. **Balanced fill** - Right sidebar, sub-groups, and layer containers should feel full and evenly distributed, not sparse
+10. **Flat cell tree** - Every cell uses `parent="1"` with absolute canvas coordinates, including
+    leaf items that sit visually inside a sub-group. The nesting is purely visual. Do NOT set a
+    container's ID as the `parent` here - the layout constants below are all absolute
+11. **Emission order** - background, then sidebar frame + its items, then per layer: label,
+    container, sub-groups, leaf items. Anything emitted later paints on top
 
 ### Layout Constants
 

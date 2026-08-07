@@ -5,21 +5,26 @@ description: |
 
   Trigger words: "draw", "diagram", "flowchart", "architecture", "UML", "sequence diagram", "mindmap", "ER diagram", "network topology", "visualize", "draw.io", "drawio".
 
-  Workflow: understand requirements -> generate drawio XML directly -> self-review -> CLI export PNG/SVG/PDF.
+  Workflow: understand requirements -> generate drawio XML directly -> self-review -> CLI export PNG/SVG/PDF -> hand back an app.diagrams.net link that opens the diagram in the browser.
 ---
 
 # Draw.io Diagram Generator
 
 ## Workflow
 
+Each numbered step below has a matching `## Step N` section. Follow them in order.
+
 ```
-1. Understand requirements  -> determine diagram type, elements, relationships
-2. Generate XML directly    -> write drawio XML (read only the relevant section from references/best-practices.md)
-3. Self-review (DO NOT SKIP) -> re-read XML and fix any issues found
-4. Save .drawio file        -> write to user's working directory
-5. CLI export               -> call draw.io desktop CLI to export image
-6. Deliver to user          -> show image + provide editable .drawio file
+1. Understand requirements   -> determine diagram type, elements, relationships
+2. Generate XML directly     -> write drawio XML; read the matching reference section first
+3. Apply layout rules        -> coordinates, spacing, sizes, cell order
+4. Save + validate (DO NOT SKIP) -> write the .drawio file, run the validator, fix every error
+5. CLI export (optional)     -> call draw.io desktop CLI to export an image (skip if not installed)
+6. Browser link (DO NOT SKIP) -> build an app.diagrams.net link that opens the .drawio in the browser
+7. Deliver to user           -> image + .drawio file path + browser link
 ```
+
+Step 6 has no dependencies — it works even when draw.io desktop is missing, so it is always the guaranteed delivery path.
 
 ## Step 1: Understand Requirements
 
@@ -33,6 +38,20 @@ Determine:
 ## Step 2: Generate XML
 
 **You MUST write the XML directly.** Do not call any script to generate it.
+
+### Read the matching reference first
+
+| Diagram type | Read before writing |
+|--------------|--------------------|
+| Architecture | `references/best-practices.md` → *Architecture Diagram Templates*, then `references/examples.md` → *Example 2* |
+| Flowchart | `references/examples.md` → *Example 1* |
+| Mindmap | `references/examples.md` → *Example 3* |
+| ER | `references/examples.md` → *Example 4* |
+| UML sequence/class, network, anything else | `references/best-practices.md` → *General Rules*, then write from your own knowledge |
+
+`references/examples.md` holds complete, validated diagrams — copying the structure of the
+closest example is faster and more reliable than composing one from scratch. Read only the
+sections you need, not the whole file.
 
 ### Base XML Structure
 
@@ -85,11 +104,46 @@ Determine:
 </mxCell>
 ```
 
+### Cell Order Is Z-Order (CRITICAL)
+
+draw.io paints cells **in document order**: whatever comes later in `<root>` is drawn on top.
+Emit cells back-to-front:
+
+```
+1. Background plate      (the big gray rectangle, if any)
+2. Layer containers      (semi-transparent blocks)
+3. Sub-group containers
+4. Leaf nodes / labels
+5. Edges
+```
+
+Writing the background rectangle after the nodes hides the entire diagram behind a gray
+block — this is the single most destructive ordering mistake, and it renders as a blank
+image with no error anywhere.
+
+### Parent and Coordinate System
+
+A cell's `x`/`y` are **relative to its parent**. That gives you two valid approaches, and
+mixing them is what produces diagrams where everything is shifted off-screen:
+
+| Approach | When | `parent` | Coordinates |
+|----------|------|----------|-------------|
+| **Flat + absolute** (default) | Everything except ER/UML tables, including the Layered Block Style — visual nesting comes from the numbers, not the tree | always `"1"` | absolute canvas coordinates |
+| **True nesting** | Only when the shape genuinely owns its children: `swimlane` tables (ER, UML class), `childLayout=stackLayout` rows | the container's ID | relative to the container's top-left, so a child at `y="30"` sits 30px below the container's top |
+
+**Default to flat + absolute.** The Layered Block Style puts every leaf node at `parent="1"`
+with absolute coordinates even though it looks nested — see `references/examples.md` Example 2.
+Only ER/UML table rows use true nesting, where a row's `x` is omitted and `y` is its offset
+inside the swimlane — see Example 4.
+
 ## Step 3: Layout Rules (CRITICAL for beautiful output)
 
 ### General Principles
 
-1. **Grid alignment**: all x, y coordinates must be multiples of 10 (snap to grid)
+1. **Grid alignment**: anchor top-level blocks (background plate, layer containers, sidebars,
+   the primary column/row of a flowchart) to multiples of 10. Positions *derived* from the
+   centering formulas below may land off the grid — that is fine and expected. The hard rule
+   is that **every coordinate must be a whole number**; never emit fractional values.
 2. **Generous spacing**: minimum 80px gap between node edges (not centers)
 3. **Center alignment**: nodes in the same column share the same x; nodes in the same row share the same y
 4. **Consistent sizing**: same-type nodes use identical width and height
@@ -126,9 +180,12 @@ Use this formula to center N items horizontally in a row:
 
 ```
 total_width = N * node_width + (N - 1) * gap
-start_x = (pageWidth - total_width) / 2
+start_x = round((pageWidth - total_width) / 2)
 item[i].x = start_x + i * (node_width + gap)
 ```
+
+Round the result to a whole number. Do not then "fix" it to a multiple of 10 by nudging
+individual items — that breaks the equal-gap invariant, which matters far more than the grid.
 
 For vertical centering in a column, apply the same logic to Y axis.
 
@@ -162,66 +219,96 @@ For incomplete last rows, center the remaining items instead of left-aligning th
 | ER table header | 200 | varies |
 | Group/container | auto | auto |
 
-## Step 4: Self-Review (DO NOT SKIP)
+Pick one size per role and keep it identical for every node of that role in the diagram. A
+start node that is 20px wider than the process nodes below it reads as a mistake, not as
+emphasis — use color and `fontStyle=1` to emphasize instead.
 
-After generating XML, re-read your output and check each item below. If any check fails, fix the XML before proceeding. This step catches the most common rendering bugs — skipping it results in broken diagrams.
+## Step 4: Save and Validate (DO NOT SKIP)
 
-**Structural checks:**
-- [ ] All `id` values are unique across the entire file
-- [ ] Every `mxCell` with `vertex="1"` has correct `parent` (usually `"1"`, but container children use the container ID)
-- [ ] Every edge's `source` and `target` reference existing node IDs
-- [ ] XML is well-formed: all tags closed, all attribute values quoted
-- [ ] `mxGeometry` always has `as="geometry"` attribute
+Write the `.drawio` file to the user's working directory, then run the validator on it.
 
-**Layout checks** (these are the most common failures — actually verify the numbers):
-- [ ] No two non-container nodes overlap: for each pair, confirm their bounding boxes (x, y, x+width, y+height) don't intersect
-- [ ] All coordinates (x, y) are multiples of 10 — scan every `mxGeometry` element
-- [ ] Page dimensions (pageWidth, pageHeight) are large enough for all content with margins
+### 4a. Run the validator
+
+```bash
+python scripts/validate_drawio.py diagram.drawio
+```
+
+Use `python3` if `python` is missing. It exits non-zero when it finds errors.
+
+**Fix every ERROR and re-run until it exits clean.** Do not export or deliver a file that
+still reports errors — each one is a diagram that renders wrong or not at all. The validator
+catches what re-reading your own XML reliably misses:
+
+| Reported as | Checks |
+|-------------|--------|
+| ERROR | malformed XML, duplicate IDs, missing root cells, dangling `parent`/`source`/`target`, missing `as="geometry"`, literal `\n` in a label, partially overlapping nodes |
+| WARN | missing `whiteSpace=wrap` / `html=1`, `fontSize` under 12, fractional coordinates, content past `pageWidth`/`pageHeight` |
+
+Treat WARNs as defects too unless you have a specific reason — a "content extends past
+pageWidth" warning means part of the diagram falls outside the page.
+
+Note what the validator **cannot** see: it reports partial overlaps only, since full
+containment is how the Layered Block Style expresses nesting. It says nothing about whether
+the layout is balanced or the diagram is readable. That is 4b.
+
+### 4b. Review what the validator cannot check
+
+Re-read your XML and confirm:
+
+- [ ] Cells are in back-to-front order: background → containers → sub-groups → leaves → edges
 - [ ] Sibling items in the same row/column use equal sizes and equal gaps unless there is a clear reason not to
-- [ ] Left/right padding and top/bottom padding inside each container are visually balanced; no obvious one-sided blank area
+- [ ] Left/right and top/bottom padding inside each container are visually balanced; no obvious one-sided blank area
 - [ ] Containers, sub-groups, and sidebars are sized to content plus padding; if a blank region is larger than a normal item gap or roughly a full item row, tighten the layout
-- [ ] Incomplete last rows are centered or otherwise balanced; they are not stuck to one side with a large empty remainder
+- [ ] Incomplete last rows are centered, not stuck to one side with a large empty remainder
+- [ ] Decision branches (Yes/No) leave in clearly different directions
+- [ ] Edges use `edgeStyle=orthogonalEdgeStyle` for clean routing (except mindmaps, which use `curved=1`)
+- [ ] Decision nodes use `rhombus`; database nodes use `shape=cylinder3`
+- [ ] Labels are in the user's language and read naturally
 
-**Style checks:**
-- [ ] All nodes include `whiteSpace=wrap;html=1;` in style
-- [ ] Every multi-line label uses `&#xa;` inside `value`, never literal `\n`
-- [ ] `fontSize=14` or larger for readability
-- [ ] Edges use `edgeStyle=orthogonalEdgeStyle` for clean routing (except mindmaps which use `curved=1`)
-- [ ] Decision nodes use `rhombus` shape; database nodes use `shape=cylinder3`
+## Step 5: CLI Export (Optional, Cross-Platform)
 
-## Step 5: CLI Export (Cross-Platform)
+This step needs the draw.io **desktop app**. If it is not installed, do not stop and do not
+block on an install — skip straight to Step 6, which needs nothing but a browser.
 
 ### 5a. Detect draw.io
 
-Run these commands **in order**, stop at the first one that succeeds:
+**Use the syntax of the shell you actually have.** On Windows the default shell is usually
+PowerShell, where `which` and `ls "/c/..."` do not exist and the check fails for the wrong
+reason. Stop at the first command that succeeds.
 
-```bash
-# 1. Try PATH first (works if user installed globally)
-which draw.io 2>/dev/null || which drawio 2>/dev/null
+**Windows (PowerShell):**
+```powershell
+(Get-Command draw.io, drawio -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+# then the default install locations
+"$env:ProgramFiles\draw.io\draw.io.exe", "$env:LOCALAPPDATA\Programs\draw.io\draw.io.exe" |
+  Where-Object { Test-Path $_ } | Select-Object -First 1
 ```
 
-If that fails, check platform-specific default paths:
-
-**macOS:**
+**macOS / Linux (bash):**
 ```bash
+which drawio 2>/dev/null || which draw.io 2>/dev/null
+```
+
+If PATH lookup fails, check the platform default paths:
+
+```bash
+# macOS
 ls /Applications/draw.io.app/Contents/MacOS/draw.io 2>/dev/null
+# Linux
+ls /usr/bin/drawio 2>/dev/null || ls /snap/bin/drawio 2>/dev/null
 ```
 
-**Windows (bash/MSYS2):**
+**Windows (bash/MSYS2)**, if that is what you are running in:
 ```bash
-# Check common install locations
 ls "/c/Program Files/draw.io/draw.io.exe" 2>/dev/null || \
 ls "$LOCALAPPDATA/Programs/draw.io/draw.io.exe" 2>/dev/null
 ```
 
-**Linux:**
-```bash
-ls /usr/bin/drawio 2>/dev/null || ls /snap/bin/drawio 2>/dev/null
-```
+### 5b. If not found, fall back to the browser
 
-### 5b. If not found, guide installation
-
-Tell the user draw.io is not installed and suggest:
+**Do not stall the task on an install.** Go to Step 6 and deliver the diagram through
+app.diagrams.net, then mention the desktop app as an optional extra for offline editing
+and image export:
 
 | Platform | Install Command |
 |----------|----------------|
@@ -237,8 +324,30 @@ Do NOT auto-install without user confirmation.
 Use the detected path (stored as `$DRAWIO`) to export:
 
 ```bash
-"$DRAWIO" -x -f png --scale 2 -o output.png diagram.drawio
+"$DRAWIO" -x -f png --scale 2 --border 20 -o output.png diagram.drawio
 ```
+
+On a headless Linux box the Electron app needs a display and a sandbox opt-out:
+
+```bash
+xvfb-run -a "$DRAWIO" -x -f png --scale 2 --border 20 --no-sandbox -o output.png diagram.drawio
+```
+
+### 5d. Verify the output file exists
+
+**Do not trust the exit code.** draw.io desktop is a GUI application; when launched from a
+shell it often returns 0 immediately, before (or without) writing anything. Always confirm
+the file landed and is non-empty:
+
+```bash
+ls -l output.png          # bash
+```
+```powershell
+Get-Item output.png | Select-Object Length   # PowerShell
+```
+
+If the file is missing or 0 bytes, treat the export as failed: say so, and deliver via the
+Step 6 browser link instead. Never report an export you did not verify.
 
 ### Export flags
 
@@ -253,12 +362,74 @@ Use the detected path (stored as `$DRAWIO`) to export:
 | `-p 0` | Export specific page (0-indexed) |
 | `--crop` | Crop to diagram content |
 
-## Step 6: Deliver to User
+Default to `--scale 2 --border 20` for PNG. Reach for `--crop` when the diagram is much
+smaller than the `pageWidth`/`pageHeight` you set and the export comes out with wide empty
+margins; drop `--scale` for SVG and PDF, where it does nothing useful.
 
-After export:
-- Show the exported image
-- Tell the user the .drawio file location (can be edited at https://app.diagrams.net)
-- Mention the export format used
+## Step 6: Open in draw.io Online (DO NOT SKIP)
+
+A `.drawio` file on disk is not something the user can look at. Always hand back a link that
+opens the finished diagram in the official web editor, where they can edit, export or save it.
+
+The link format is `https://app.diagrams.net/?title=<name>#R<data>`, where `<data>` is
+`base64(deflateRaw(encodeURIComponent(xml)))`. draw.io decodes the `#R` fragment in the
+browser — the diagram never leaves the user's machine, and no account or upload is needed.
+
+### 6a. Build the link
+
+Run the bundled script on the saved file (paths are relative to this skill's directory):
+
+```bash
+python scripts/open_in_drawio.py diagram.drawio
+```
+
+If `python` is missing or is a stub, use `python3`, then fall back to Node:
+
+```bash
+node scripts/open_in_drawio.js diagram.drawio
+```
+
+Both print the URL on stdout and share the same flags:
+
+| Flag | Purpose |
+|------|---------|
+| *(none)* | Print the URL only — the default; use this and let the user click |
+| `--open` | Also launch the default browser on that URL |
+| `--html PATH` | Write a click-to-open launcher page instead of relying on the terminal |
+| `--title NAME` | File name shown in draw.io (defaults to the input file name) |
+
+**Only pass `--open` when the user asked to open it** ("打开看看", "open it in the browser").
+Launching a browser unprompted is intrusive. Default to printing the link.
+
+### 6b. Long diagrams
+
+The whole diagram travels inside the URL, so big diagrams produce very long links. A link
+over ~2000 characters can be mangled by terminals and by the OS URL handler:
+
+- With `--open`, the script handles this automatically — it writes a temporary launcher page
+  and opens that instead, so nothing is truncated.
+- Without `--open`, if the URL exceeds ~2000 characters, write a launcher next to the diagram
+  with `--html diagram-open.html` and tell the user to open that file, **or** fall back to 6c.
+
+### 6c. Manual fallback
+
+If the script cannot run at all (no Python, no Node), tell the user to:
+
+1. Open https://app.diagrams.net
+2. Choose **File → Open From → Device** (or just drag the `.drawio` file onto the page)
+3. Select the generated `.drawio` file
+
+## Step 7: Deliver to User
+
+Deliver all of these, in this order:
+
+1. The exported image, if Step 5 ran
+2. The `.drawio` file path — the editable source
+3. The **app.diagrams.net link** from Step 6, so the user can open and edit it in one click
+4. The export format used, if Step 5 ran
+
+If Step 5 was skipped because draw.io desktop is not installed, say so in one line and note
+that the browser link still covers viewing, editing and exporting.
 
 ## File Naming
 
@@ -276,12 +447,23 @@ When the user is not satisfied with the result and asks for modifications:
 1. **Read the existing .drawio file** first to understand current structure
 2. **Edit based on the existing XML** — do not regenerate from scratch
 3. Apply the user's requested changes while preserving the overall layout and style
-4. Run the same self-review and export steps
+4. Run the same validate, export and browser-link steps (4 → 7) — always regenerate the
+   app.diagrams.net link, since the old one still encodes the previous version
 
 ## Reference
 
-`references/best-practices.md` contains:
-- **General Rules** — ID management, style essentials, common mistakes
+`references/best-practices.md`:
+- **General Rules** — ID management, cell order, parent/coordinate system, style essentials, common mistakes
 - **Architecture Diagram Templates (Layered Block Style)** — the preferred architecture style with full XML templates and layout constants
 
-For other diagram types (flowchart, UML, ER, mindmap, network, etc.), generate appropriate draw.io XML directly based on your knowledge. Read the "General Rules" section for basic formatting guidance.
+`references/examples.md` — four complete, validated diagrams to copy the structure of:
+- Example 1: flowchart · Example 2: layered block architecture · Example 3: mindmap · Example 4: ER
+- Also holds the **Color Palette Reference** — use these fill/stroke pairs instead of inventing colors
+
+`scripts/`:
+- `validate_drawio.py` — mechanical checks on a `.drawio` file (Step 4). Run it every time.
+- `open_in_drawio.py` / `open_in_drawio.js` — build the app.diagrams.net `#R` link for a
+  `.drawio` file (Step 6). Identical CLIs; use whichever runtime is available.
+
+For diagram types without an example (UML sequence/class, network topology, etc.), read the
+"General Rules" section and generate the XML from your own knowledge.
