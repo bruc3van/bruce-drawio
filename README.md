@@ -2,7 +2,9 @@
 
 # Draw.io 图表生成技能
 
-跨平台的 draw.io (diagrams.net) 图表生成技能，适用于 AI 编程 Agent（Claude Code、OpenClaw 等）。Agent 直接生成 drawio XML，经过自检后通过 CLI 导出图片。
+跨平台的 draw.io (diagrams.net) 图表生成技能，适用于 Claude Code、codex、zcode、workbuddy、OpenClaw 等各类 AI 编程 Agent。Agent 直接生成 drawio XML，校验后通过 CLI 导出图片；没有桌面版时自动降级为 draw.io 官网打开链接。
+
+技能本身是纯 Markdown + 两个零依赖脚本，不绑定任何特定 Agent 的运行时。
 
 ## 安装
 
@@ -13,6 +15,23 @@
 ```
 
 Agent 会自动克隆仓库并完成配置。
+
+如果你的 Agent 不支持自动安装，手动克隆到对应的 skills 目录即可：
+
+| Agent                                   | skills 目录         |
+| --------------------------------------- | ------------------- |
+| Claude Code                             | `~/.claude/skills/` |
+| codex / zcode / workbuddy / OpenClaw 等 | `~/.agents/skills/` |
+
+```bash
+# Claude Code
+git clone https://github.com/bruc3van/bruce-drawio ~/.claude/skills/bruce-drawio
+
+# 其他 Agent
+git clone https://github.com/bruc3van/bruce-drawio ~/.agents/skills/bruce-drawio
+```
+
+Windows 上把 `~` 换成 `$HOME`（PowerShell）或 `%USERPROFILE%`（cmd）。技能没有构建步骤，克隆完就能用。
 
 ## 支持的图表类型
 
@@ -28,7 +47,7 @@ Agent 会自动克隆仓库并完成配置。
 
 ## 平台支持
 
-draw.io 桌面版仅用于导出图片，属于可选项；不安装也能通过下面的[一键在浏览器打开](#一键在浏览器打开)查看和编辑图表。
+draw.io 桌面版仅用于导出图片，属于可选项；不安装也能通过[在浏览器打开](#在浏览器打开)查看和编辑图表。
 
 | 平台    | 安装命令                       | 包管理器            |
 | ------- | ------------------------------ | ------------------- |
@@ -38,6 +57,8 @@ draw.io 桌面版仅用于导出图片，属于可选项；不安装也能通过
 
 所有平台也支持从 [draw.io releases](https://github.com/jgraph/drawio-desktop/releases) 手动下载安装。
 
+Linux 无头环境（容器、CI）下导出需要 `xvfb-run -a` 并加 `--no-sandbox`，Agent 会自动处理。
+
 ## 工作流程
 
 1. 用户描述想要的图表
@@ -46,8 +67,8 @@ draw.io 桌面版仅用于导出图片，属于可选项；不安装也能通过
 4. 应用布局规则（坐标、间距、尺寸、单元格顺序）
 5. 保存 `.drawio` 并跑校验脚本，错误清零
 6. 通过 CLI 导出为 PNG/SVG/PDF（未安装桌面版则跳过）
-7. 生成 draw.io 官网一键打开链接
-8. 向用户展示图片、源文件路径和在线打开链接
+7. 需要时生成 draw.io 官网打开链接
+8. 交付图片和源文件路径
 
 ## XML 校验
 
@@ -64,11 +85,34 @@ python scripts/validate_drawio.py diagram.drawio
 
 有 ERROR 时退出码为 1。重叠检测只报**部分重叠**——完全包含是分层块状风格表达嵌套的方式，不算问题。
 
-## 一键在浏览器打开
+## 在浏览器打开
 
-每次生成图表后，Agent 都会给出一条 `https://app.diagrams.net/?title=xxx#R...` 链接，点击即可在 draw.io 官网直接打开该图，继续编辑或导出——**不需要安装桌面版，也不需要注册登录**。
+Agent 可以给出一条 `https://app.diagrams.net/?title=xxx#R...` 链接，点开就是这张图，能继续编辑或导出——**不需要安装桌面版，也不需要注册登录**。
 
 原理：图表 XML 经过 `encodeURIComponent → deflate raw → base64` 后放进 URL 的 `#R` 片段。片段部分不会发送给服务器，由 draw.io 前端在浏览器本地解码，因此**图表内容不会上传到任何服务器**。
+
+### 什么时候会给链接
+
+这条链接是**兜底和按需**，不是每张图都附赠：
+
+| 情况                | 行为                                                   |
+| ------------------- | ------------------------------------------------------ |
+| 导出成功            | 不主动给，只在结尾提一句「需要在线打开就说一声」       |
+| 没装桌面版/导出失败 | 链接作为主交付——这也是它存在的意义：任何环境都能看到图 |
+| 你开口要            | 立刻生成（"打开看看"、"我想改一下"、"发给同事"）       |
+
+### ⚠️ 链接是副本，不是本地文件的入口
+
+`#R` 链接把整张图**复制**进了 URL，draw.io 打开的是一个和磁盘文件毫无关联的新文件。**在浏览器里的修改不会同步回本地 `.drawio`。**
+
+改完有两条路：
+
+- 在 draw.io 里 **File → Save as → Device** 下载，覆盖本地的 `.drawio`
+- 或者直接告诉 Agent 要改什么，让它改本地文件再重新导出
+
+如果装了桌面版，想继续编辑更推荐直接打开本地文件（`draw.io diagram.drawio`），改动原地保存，没有分叉问题。从官网用 **File → Open From → Device** 打开本地文件也同样没有这个问题。
+
+### 脚本用法
 
 链接由 `scripts/` 下的脚本生成，Python / Node 二选一即可：
 
@@ -97,7 +141,9 @@ node   scripts/open_in_drawio.js diagram.drawio          # 没有 Python 时的�
 | SVG  | `-f svg` | 可缩放矢量图       |
 | PDF  | `-f pdf` | 打印 / 嵌入文档    |
 
-使用 `--scale 2` 可导出高清 PNG。
+PNG 默认带 `--scale 2 --border 20`（高清 + 留白）。画布远大于图形、导出后四周空白过多时，加 `--crop` 裁到内容。SVG / PDF 不需要 `--scale`。
+
+导出后 Agent 会确认输出文件确实存在且非空——draw.io 桌面版是 GUI 程序，从命令行调用时经常立刻返回 0 但并没有写出文件，退出码不可信。导出失败会如实告知，并改用浏览器链接交付。
 
 ## 项目结构
 
@@ -106,8 +152,8 @@ bruce-drawio/
   SKILL.md                      # 主技能文档（工作流程 + 规则）
   skill.json                    # 技能元数据
   references/
-    best-practices.md           # XML 模板、样式、布局规则
-    examples.md                 # 完整的可用 XML 示例
+    best-practices.md           # XML 模板、样式、布局规则、常见错误
+    examples.md                 # 4 个完整可用的示例（流程图/架构图/思维导图/ER）+ 配色表
   scripts/
     validate_drawio.py          # .drawio 机械校验（ID、引用、几何、重叠）
     open_in_drawio.py           # 生成 draw.io 官网一键打开链接（Python）
@@ -129,9 +175,9 @@ bruce-drawio/
 
 ## 依赖检测
 
-draw.io 桌面版是**可选**依赖，只用于导出 PNG/SVG/PDF。Agent 按照 SKILL.md 中的步骤通过 shell 命令（`which drawio`、检查默认安装路径）自动检测；未安装时不会卡住流程，而是直接走浏览器打开链接这条路，并顺带提示可选的安装方式。
+draw.io 桌面版是**可选**依赖，只用于导出 PNG/SVG/PDF。Agent 按照 SKILL.md 中的步骤自动检测，并且会用当前 shell 的语法：PowerShell 下用 `Get-Command` / `Test-Path $env:LOCALAPPDATA\Programs\draw.io\draw.io.exe`，bash 下用 `which drawio` 加默认安装路径。未安装时不会卡住流程，也不会追着让你装，而是直接走浏览器打开链接这条路，安装方式只作为可选项提一句。
 
-生成打开链接只依赖 Python 3 或 Node 之一（两者都用标准库，无需 `pip install` / `npm install`）。
+校验和生成打开链接只依赖 Python 3 或 Node 之一（全部使用标准库，无需 `pip install` / `npm install`）。
 
 ## 使用示例
 

@@ -2,7 +2,9 @@ English | [中文](README.md)
 
 # Draw.io Diagram Generator Skill
 
-Cross-platform draw.io (diagrams.net) diagram generation skill for AI coding agents (Claude Code, OpenClaw, etc.). The agent directly generates drawio XML, self-reviews it, exports via CLI, and hands back a one-click link that opens the diagram on app.diagrams.net.
+Cross-platform draw.io (diagrams.net) diagram generation skill for AI coding agents — Claude Code, codex, zcode, workbuddy, OpenClaw and others. The agent directly generates drawio XML, validates it, and exports via CLI — falling back to a one-click app.diagrams.net link when the desktop app is not available.
+
+The skill is plain Markdown plus two dependency-free scripts, so it is not tied to any particular agent runtime.
 
 ## Installation
 
@@ -13,6 +15,23 @@ Help me install this skill: https://github.com/bruc3van/bruce-drawio
 ```
 
 The agent will clone the repository and configure the skill automatically.
+
+If your agent has no automatic install, clone it into that agent's skills directory yourself:
+
+| Agent                                      | Skills directory    |
+| ------------------------------------------ | ------------------- |
+| Claude Code                                | `~/.claude/skills/` |
+| codex / zcode / workbuddy / OpenClaw, etc. | `~/.agents/skills/` |
+
+```bash
+# Claude Code
+git clone https://github.com/bruc3van/bruce-drawio ~/.claude/skills/bruce-drawio
+
+# every other agent
+git clone https://github.com/bruc3van/bruce-drawio ~/.agents/skills/bruce-drawio
+```
+
+On Windows, replace `~` with `$HOME` (PowerShell) or `%USERPROFILE%` (cmd). There is no build step — the skill works as soon as it is cloned.
 
 ## Supported Diagram Types
 
@@ -38,6 +57,8 @@ The draw.io desktop app is only needed for image export and is optional — with
 
 All platforms also support manual download from [draw.io releases](https://github.com/jgraph/drawio-desktop/releases).
 
+On headless Linux (containers, CI) the export needs `xvfb-run -a` and `--no-sandbox`; the agent handles this automatically.
+
 ## How It Works
 
 1. User describes the diagram they want
@@ -46,8 +67,8 @@ All platforms also support manual download from [draw.io releases](https://githu
 4. Layout rules are applied (coordinates, spacing, sizes, cell order)
 5. Saves the `.drawio` file and runs the validator until it exits clean
 6. CLI exports to PNG/SVG/PDF (skipped when the desktop app is not installed)
-7. Builds a one-click app.diagrams.net link
-8. Delivers the image, the editable source file and the browser link
+7. Builds an app.diagrams.net link when one is needed
+8. Delivers the image and the source file path
 
 ## XML Validation
 
@@ -66,9 +87,32 @@ Exit code is 1 when errors are found. Overlap detection reports **partial** over
 
 ## Open in the Browser
 
-After every diagram, the agent hands back a `https://app.diagrams.net/?title=xxx#R...` link. Clicking it opens that exact diagram in the official web editor for further editing or export — **no desktop install, no account, no sign-in**.
+The agent can hand back a `https://app.diagrams.net/?title=xxx#R...` link. Clicking it opens that exact diagram in the official web editor for further editing or export — **no desktop install, no account, no sign-in**.
 
 How it works: the diagram XML goes through `encodeURIComponent → deflate raw → base64` and rides in the URL's `#R` fragment. Fragments are never sent to the server; draw.io decodes it locally in the browser, so **the diagram content is not uploaded anywhere**.
+
+### When you get a link
+
+The link is a **fallback and an on-request extra**, not an attachment on every diagram:
+
+| Situation                        | Behaviour                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| Export succeeded                 | No link by default — just a closing line offering one                        |
+| No desktop app / export failed   | The link becomes the primary delivery. This is the point of it: the diagram is viewable in any environment |
+| You ask for it                   | Generated right away ("open it", "I want to tweak this", "share this")       |
+
+### ⚠️ The link is a copy, not a handle on the local file
+
+The `#R` link carries a **copy** of the diagram inside the URL. draw.io opens it as a new file with no connection to the one on disk, so **edits made in the browser do not sync back to the local `.drawio`**.
+
+Two ways to close the loop:
+
+- In draw.io, **File → Save as → Device** and overwrite the local `.drawio`
+- Or just tell the agent what to change, and let it edit the local file and re-export
+
+With the desktop app installed, opening the local file directly (`draw.io diagram.drawio`) is the better route for continued editing — edits save in place, no fork. Opening the local file from the website via **File → Open From → Device** avoids the fork too.
+
+### Script usage
 
 The link is produced by the scripts under `scripts/` — use whichever runtime you have:
 
@@ -97,7 +141,9 @@ node   scripts/open_in_drawio.js diagram.drawio          # equivalent, for Node-
 | SVG    | `-f svg` | Scalable vector    |
 | PDF    | `-f pdf` | Print / document   |
 
-Use `--scale 2` for high-DPI PNG output.
+PNG defaults to `--scale 2 --border 20` (high-DPI plus padding). Add `--crop` when the canvas is much larger than the drawing and the export comes out with wide empty margins. `--scale` does nothing useful for SVG and PDF.
+
+After exporting, the agent confirms the output file exists and is non-empty — draw.io desktop is a GUI application that frequently returns 0 from the command line without having written anything, so the exit code cannot be trusted. A failed export is reported as such, and delivery falls back to the browser link.
 
 ## Project Structure
 
@@ -106,8 +152,8 @@ bruce-drawio/
   SKILL.md                      # Main skill document (workflow + rules)
   skill.json                    # Skill metadata
   references/
-    best-practices.md           # XML templates, styles, layout rules
-    examples.md                 # Complete working XML examples
+    best-practices.md           # XML templates, styles, layout rules, common mistakes
+    examples.md                 # 4 complete examples (flowchart/architecture/mindmap/ER) + palette
   scripts/
     validate_drawio.py          # Mechanical .drawio checks (ids, refs, geometry, overlap)
     open_in_drawio.py           # Build the app.diagrams.net one-click link (Python)
@@ -129,9 +175,9 @@ Architecture diagrams use a **layered block layout** style by default:
 
 ## Dependency Check
 
-The draw.io desktop app is an **optional** dependency, used only for PNG/SVG/PDF export. The agent follows SKILL.md Step 5 to detect it via shell commands (`which drawio`, checking default paths). If it is missing the workflow does not stall — it falls through to the browser link and mentions the optional install.
+The draw.io desktop app is an **optional** dependency, used only for PNG/SVG/PDF export. The agent follows SKILL.md Step 5 to detect it using the syntax of whichever shell it is in: `Get-Command` / `Test-Path $env:LOCALAPPDATA\Programs\draw.io\draw.io.exe` on PowerShell, `which drawio` plus the default install paths on bash. If it is missing the workflow does not stall and does not nag about installing — it falls through to the browser link and mentions the install only as an optional extra.
 
-Building that link needs only Python 3 or Node; both scripts use standard library only, with no `pip install` / `npm install`.
+Validation and link building need only Python 3 or Node; every script is standard library only, with no `pip install` / `npm install`.
 
 ## Usage Examples
 

@@ -5,7 +5,7 @@ description: |
 
   Trigger words: "draw", "diagram", "flowchart", "architecture", "UML", "sequence diagram", "mindmap", "ER diagram", "network topology", "visualize", "draw.io", "drawio".
 
-  Workflow: understand requirements -> generate drawio XML directly -> self-review -> CLI export PNG/SVG/PDF -> hand back an app.diagrams.net link that opens the diagram in the browser.
+  Workflow: understand requirements -> generate drawio XML directly -> validate -> CLI export PNG/SVG/PDF, falling back to an app.diagrams.net browser link when draw.io desktop is unavailable.
 ---
 
 # Draw.io Diagram Generator
@@ -20,11 +20,14 @@ Each numbered step below has a matching `## Step N` section. Follow them in orde
 3. Apply layout rules        -> coordinates, spacing, sizes, cell order
 4. Save + validate (DO NOT SKIP) -> write the .drawio file, run the validator, fix every error
 5. CLI export (optional)     -> call draw.io desktop CLI to export an image (skip if not installed)
-6. Browser link (DO NOT SKIP) -> build an app.diagrams.net link that opens the .drawio in the browser
-7. Deliver to user           -> image + .drawio file path + browser link
+6. Browser link (conditional) -> only when the export failed, or the user asks for it
+7. Deliver to user           -> image + .drawio file path, kept short
 ```
 
-Step 6 has no dependencies — it works even when draw.io desktop is missing, so it is always the guaranteed delivery path.
+Steps 5 and 6 are two routes to the same goal, not two deliverables to stack up. Export is
+the default. The browser link is the fallback that needs nothing installed — it guarantees
+the user can always see the diagram, so it is never a dead end, but it is also a detached
+copy of the file (Step 6d) and should not be pushed on a user who already has an image.
 
 ## Step 1: Understand Requirements
 
@@ -267,8 +270,10 @@ Re-read your XML and confirm:
 
 ## Step 5: CLI Export (Optional, Cross-Platform)
 
-This step needs the draw.io **desktop app**. If it is not installed, do not stop and do not
-block on an install — skip straight to Step 6, which needs nothing but a browser.
+This step needs the draw.io **desktop app**, and it is the preferred route: it renders an
+image the user can see immediately, and the `.drawio` it reads is the same file the desktop
+app edits in place. If the app is not installed, do not stop and do not block on an install —
+go to Step 6, which needs nothing but a browser.
 
 ### 5a. Detect draw.io
 
@@ -349,6 +354,13 @@ Get-Item output.png | Select-Object Length   # PowerShell
 If the file is missing or 0 bytes, treat the export as failed: say so, and deliver via the
 Step 6 browser link instead. Never report an export you did not verify.
 
+### 5e. If the user wants to keep editing
+
+When the desktop app is present, the best way to hand off an editable diagram is the local
+file itself — `"$DRAWIO" diagram.drawio` opens it and saves edits back to the same path. Only
+reach for the Step 6 link when the desktop app is unavailable or the user explicitly wants
+the browser.
+
 ### Export flags
 
 | Flag | Purpose |
@@ -366,16 +378,28 @@ Default to `--scale 2 --border 20` for PNG. Reach for `--crop` when the diagram 
 smaller than the `pageWidth`/`pageHeight` you set and the export comes out with wide empty
 margins; drop `--scale` for SVG and PDF, where it does nothing useful.
 
-## Step 6: Open in draw.io Online (DO NOT SKIP)
+## Step 6: Open in draw.io Online (Conditional)
 
-A `.drawio` file on disk is not something the user can look at. Always hand back a link that
-opens the finished diagram in the official web editor, where they can edit, export or save it.
+An app.diagrams.net link opens the finished diagram in the official web editor with no
+install and no account. It is the fallback that guarantees delivery when Step 5 could not
+produce an image — but it is **not** something to attach to every diagram.
+
+### 6a. Decide whether to build a link
+
+| Situation | What to do |
+|-----------|-----------|
+| Step 5 exported successfully | **Do not build a link.** The user already has an image plus a `.drawio` their desktop app opens natively. Close with one short line: "需要在线打开/编辑的链接就说一声。" |
+| Step 5 was skipped or failed | **Build the link** — it is now the only way the user can see the diagram |
+| The user asks for it | Build it. Triggers: "打开看看", "我想改一下", "在浏览器里打开", "发给同事", "share this", "open it" |
+
+Why not always: the link is a **snapshot copy**, not a reference to the file (see 6d). Handing
+one out unprompted invites the user to edit a fork of a diagram they already have locally.
 
 The link format is `https://app.diagrams.net/?title=<name>#R<data>`, where `<data>` is
 `base64(deflateRaw(encodeURIComponent(xml)))`. draw.io decodes the `#R` fragment in the
 browser — the diagram never leaves the user's machine, and no account or upload is needed.
 
-### 6a. Build the link
+### 6b. Build the link
 
 Run the bundled script on the saved file (paths are relative to this skill's directory):
 
@@ -401,7 +425,7 @@ Both print the URL on stdout and share the same flags:
 **Only pass `--open` when the user asked to open it** ("打开看看", "open it in the browser").
 Launching a browser unprompted is intrusive. Default to printing the link.
 
-### 6b. Long diagrams
+### 6c. Long diagrams
 
 The whole diagram travels inside the URL, so big diagrams produce very long links. A link
 over ~2000 characters can be mangled by terminals and by the OS URL handler:
@@ -409,9 +433,22 @@ over ~2000 characters can be mangled by terminals and by the OS URL handler:
 - With `--open`, the script handles this automatically — it writes a temporary launcher page
   and opens that instead, so nothing is truncated.
 - Without `--open`, if the URL exceeds ~2000 characters, write a launcher next to the diagram
-  with `--html diagram-open.html` and tell the user to open that file, **or** fall back to 6c.
+  with `--html diagram-open.html` and tell the user to open that file, **or** fall back to 6e.
 
-### 6c. Manual fallback
+### 6d. Warn that browser edits do not sync back (REQUIRED)
+
+The `#R` link carries a **copy** of the diagram. draw.io opens it as a new, unsaved file with
+no connection to the `.drawio` on disk. Anything the user changes in the browser lives only
+in that browser tab — the local file silently becomes the older version.
+
+Whenever you hand over a link, say so in one line and give the two ways forward:
+
+> 浏览器里的修改不会同步回本地文件。改完请用 **File → Save as → Device** 下载并覆盖
+> `diagram.drawio`；或者直接告诉我要改什么，我改本地文件再重新导出。
+
+Never present the link as "the editable version" of the local file. It is a detached copy.
+
+### 6e. Manual fallback
 
 If the script cannot run at all (no Python, no Node), tell the user to:
 
@@ -419,17 +456,27 @@ If the script cannot run at all (no Python, no Node), tell the user to:
 2. Choose **File → Open From → Device** (or just drag the `.drawio` file onto the page)
 3. Select the generated `.drawio` file
 
+This route has no fork problem — draw.io keeps working against the file the user picked.
+
 ## Step 7: Deliver to User
 
-Deliver all of these, in this order:
+Keep it short. The diagram is the deliverable; everything else is one line each.
 
-1. The exported image, if Step 5 ran
-2. The `.drawio` file path — the editable source
-3. The **app.diagrams.net link** from Step 6, so the user can open and edit it in one click
-4. The export format used, if Step 5 ran
+**When the export succeeded:**
 
-If Step 5 was skipped because draw.io desktop is not installed, say so in one line and note
-that the browser link still covers viewing, editing and exporting.
+1. The exported image
+2. The `.drawio` file path, and the format exported
+3. One closing line offering the browser link — do not paste a link that was not asked for
+
+**When the export was skipped or failed:**
+
+1. The `.drawio` file path
+2. The app.diagrams.net link, as the primary way to view the diagram
+3. The fork warning from 6d
+4. One line on why there is no image (desktop app missing / export produced no file), with
+   the install commands only if the user seems to want them
+
+Do not pad the delivery with a recap of the diagram's contents — the user can see it.
 
 ## File Naming
 
@@ -447,8 +494,16 @@ When the user is not satisfied with the result and asks for modifications:
 1. **Read the existing .drawio file** first to understand current structure
 2. **Edit based on the existing XML** — do not regenerate from scratch
 3. Apply the user's requested changes while preserving the overall layout and style
-4. Run the same validate, export and browser-link steps (4 → 7) — always regenerate the
-   app.diagrams.net link, since the old one still encodes the previous version
+4. Re-run steps 4 → 7
+
+**Check first whether the local file is stale.** If you previously handed the user an
+app.diagrams.net link, they may have edited that copy in the browser — those changes never
+reach the local `.drawio` (Step 6d). If the user describes the current diagram in a way that
+does not match the file you just read, say so and ask them to save their browser version over
+the local file before you continue. Do not silently rebuild from the stale version.
+
+If you do hand over a new link, always regenerate it — the old one still encodes the
+previous version of the diagram.
 
 ## Reference
 

@@ -47,7 +47,7 @@
       "id": 8,
       "name": "Cross-platform Export",
       "prompt": "Draw a simple flowchart (start -> process -> end) and export it as PNG.",
-      "expected_output": "Valid drawio XML saved to .drawio file. Platform-appropriate CLI command used for export (macOS: /Applications/draw.io.app/..., Windows: draw.io.exe from Program Files or LOCALAPPDATA, Linux: drawio). Uses --scale 2 for crisp output."
+      "expected_output": "Valid drawio XML saved to .drawio file. Shell-appropriate detection is used (Get-Command / Test-Path on PowerShell, which / ls on bash), then a platform-appropriate CLI export command (macOS: /Applications/draw.io.app/..., Windows: draw.io.exe from Program Files or LOCALAPPDATA, Linux: drawio) with --scale 2 --border 20. The output file's existence and non-zero size are verified afterwards rather than the exit code being trusted."
     },
     {
       "id": 9,
@@ -63,15 +63,15 @@
     },
     {
       "id": 11,
-      "name": "Open Generated Diagram In draw.io Online",
+      "name": "Browser Link On Request",
       "prompt": "Draw a simple flowchart (start -> process -> end), then give me a link to open it in draw.io.",
-      "expected_output": "After saving the .drawio file, scripts/open_in_drawio.py (or open_in_drawio.js) is run on it and the resulting https://app.diagrams.net/?title=...#R... link is delivered to the user. The browser is NOT launched unless the user asked for it."
+      "expected_output": "After saving the .drawio file, scripts/open_in_drawio.py (or open_in_drawio.js) is run on it and the resulting https://app.diagrams.net/?title=...#R... link is delivered, together with the warning that browser edits do not sync back to the local file. The browser is NOT launched unless the user asked it to be opened."
     },
     {
       "id": 12,
       "name": "Browser Fallback When Desktop App Missing",
       "prompt": "Draw a microservice architecture diagram and export it as PNG. (Assume draw.io desktop is not installed on this machine.)",
-      "expected_output": "Detection fails, but the run does not stop and does not block on an install prompt. The .drawio file is still saved, an app.diagrams.net link is generated and delivered, the skipped export is stated in one line, and the desktop install is mentioned only as an optional extra."
+      "expected_output": "Detection fails, but the run does not stop and does not block on an install prompt. The .drawio file is still saved, an app.diagrams.net link is generated and delivered as the primary way to see the diagram, the fork warning is included, the skipped export is stated in one line, and the desktop install is mentioned only as an optional extra."
     },
     {
       "id": 13,
@@ -90,6 +90,18 @@
       "name": "Nested Container Coordinates",
       "prompt": "Draw an ER diagram for an inventory system, and a layered architecture diagram for the same system.",
       "expected_output": "The ER tables use true nesting (row parent = swimlane id, y is an offset inside the table, x omitted). The architecture diagram uses the flat form (every cell parent=\"1\" with absolute canvas coordinates) even though items look nested inside sub-groups. The two conventions are not mixed within one group."
+    },
+    {
+      "id": 16,
+      "name": "No Unrequested Link When Export Succeeds",
+      "prompt": "Draw a simple flowchart (start -> process -> end) and export it as PNG. (Assume draw.io desktop IS installed and the export succeeds.)",
+      "expected_output": "Delivery is the image plus the .drawio path and format - short. No app.diagrams.net link is pasted, because none was asked for and the user already has both an image and a locally editable file; at most one closing line offers a link on request."
+    },
+    {
+      "id": 17,
+      "name": "Stale Local File After Browser Edit",
+      "prompt": "(Follow-up turn, after the agent handed over an app.diagrams.net link.) I tweaked the diagram in the browser - now make the payment node red.",
+      "expected_output": "The agent recognises that browser edits never reached the local .drawio, does not silently rebuild from the stale file, and asks the user to save their browser version over the local file (File -> Save as -> Device) before applying the change."
     }
   ]
 }
